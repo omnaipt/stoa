@@ -22,6 +22,13 @@ export default function Dashboard() {
             <Link to="/reservas" className={buttonVariants()}>Abrir reservas</Link>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader><CardTitle>Configuração</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">Configurar os dados do restaurante (onboarding).</p>
+            <Link to="/onboarding" className={buttonVariants({ variant: "outline" })}>Abrir onboarding</Link>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
