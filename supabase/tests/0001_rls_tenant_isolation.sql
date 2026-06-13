@@ -7,7 +7,7 @@
 
 begin;
 
-select plan(8);
+select plan(11);
 
 -- pgTAP disponível
 select has_extension('pgtap');
@@ -34,9 +34,20 @@ insert into public.customers (id, restaurant_id, name, phone)
 values ('cccccccc-cccc-cccc-cccc-cccccccccccc',
         'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Cliente Um', '910000000');
 
-insert into public.reservations (restaurant_id, customer_id, customer_name, party_size, reserved_at)
+insert into public.tables (id, restaurant_id, label, seats)
+values ('dddddddd-dddd-dddd-dddd-dddddddddddd',
+        'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Mesa 1', 4);
+
+insert into public.turns (id, restaurant_id, label, service, start_time, weekdays)
+values ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+        'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Jantar', 'jantar',
+        '20:00', array[1,2,3,4,5,6,7]);
+
+insert into public.reservations (restaurant_id, customer_id, table_id, turn_id, customer_name, party_size, reserved_at)
 values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-        'cccccccc-cccc-cccc-cccc-cccccccccccc', 'Cliente Um', 2, now());
+        'cccccccc-cccc-cccc-cccc-cccccccccccc',
+        'dddddddd-dddd-dddd-dddd-dddddddddddd',
+        'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Cliente Um', 2, now());
 
 -- ── Cenário 1: utilizador A (membro) VÊ os seus dados ─────────────────────
 set local role authenticated;
@@ -53,6 +64,14 @@ select is(
 select is(
   (select count(*)::int from public.reservations),
   1, 'Membro A vê 1 reserva do seu restaurante');
+
+select is(
+  (select count(*)::int from public.tables),
+  1, 'Membro A vê 1 mesa do seu restaurante');
+
+select is(
+  (select count(*)::int from public.turns),
+  1, 'Membro A vê 1 turno do seu restaurante');
 
 select is(
   (select public.is_restaurant_member('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')),
