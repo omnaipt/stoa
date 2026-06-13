@@ -1,0 +1,4 @@
+-- Seed manual de exemplo (correr só em ambiente de desenvolvimento).
+-- Substituir o uuid pelo id de um utilizador real criado via Auth.
+-- insert into public.restaurants (name, slug, owner_id)
+-- values ('Restaurante Demo', 'demo', '00000000-0000-0000-0000-000000000000');
