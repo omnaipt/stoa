@@ -5,7 +5,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
-import Reservations from "@/pages/Reservations";
+import Onboarding from "@/pages/Onboarding";
+import Availability from "@/pages/Availability";
+import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -17,6 +19,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route
               path="/"
               element={
@@ -26,13 +29,23 @@ export default function App() {
               }
             />
             <Route
-              path="/reservas"
+              path="/disponibilidade"
               element={
                 <ProtectedRoute>
-                  <Reservations />
+                  <Availability />
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/definicoes"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+            {/* Rota antiga: a Vista de Dia foi substituída pela Vista de Disponibilidade. */}
+            <Route path="/reservas" element={<Navigate to="/disponibilidade" replace />} />
             <Route path="/index" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

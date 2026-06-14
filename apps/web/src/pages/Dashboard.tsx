@@ -16,10 +16,17 @@ export default function Dashboard() {
       </header>
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle>Reservas</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Disponibilidade</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">Gerir as reservas do restaurante.</p>
-            <Link to="/reservas" className={buttonVariants()}>Abrir reservas</Link>
+            <p className="text-sm text-muted-foreground">Ver mesas e turnos do dia e gerir reservas.</p>
+            <Link to="/disponibilidade" className={buttonVariants()}>Abrir disponibilidade</Link>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Mesas e turnos</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">Configurar o esquema de mesas e os turnos.</p>
+            <Link to="/definicoes" className={buttonVariants({ variant: "outline" })}>Abrir definições</Link>
           </CardContent>
         </Card>
       </div>
