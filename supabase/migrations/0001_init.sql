@@ -71,7 +71,10 @@ create table if not exists public.turns (
   id uuid primary key default gen_random_uuid(),
   restaurant_id uuid not null references public.restaurants (id) on delete cascade,
   label text not null,
-  service text not null check (service in ('almoco','jantar')),
+  -- Categoria de serviço do turno: texto livre e OPCIONAL (almoço, jantar,
+  -- brunch, lanche, etc.). Sem enum nem CHECK de valores: a taxonomia é
+  -- configurável por restaurante. label e start_time é que são obrigatórios.
+  service text,
   start_time time not null,
   -- Dias da semana ISO-8601: 1 = Segunda ... 7 = Domingo.
   -- int[] (não bitmask) por legibilidade e por o Postgres validar/indexar bem
@@ -116,7 +119,14 @@ create table if not exists public.reservations (
   customer_name text not null,
   customer_phone text,
   party_size int not null check (party_size > 0),
+  -- Hora exacta da reserva (exibição e ordenação).
   reserved_at timestamptz not null,
+  -- Data LÓGICA do serviço (dia de calendário no fuso do restaurante,
+  -- derivada de reserved_at pela aplicação no momento da criação). É a
+  -- unidade de disponibilidade da Fase 1 junto com turn_id, e mantém o
+  -- índice de unicidade IMMUTABLE (evita reserved_at::date, que depende
+  -- do TimeZone da sessão). Default = data UTC, ajustada pela app.
+  service_date date not null default (now() at time zone 'UTC')::date,
   status text not null default 'confirmada'
     check (status in ('pendente','confirmada','sentada','cancelada','no_show')),
   notes text,
@@ -124,9 +134,17 @@ create table if not exists public.reservations (
 );
 create index if not exists reservations_restaurant_time_idx
   on public.reservations (restaurant_id, reserved_at);
--- Suporta a query de disponibilidade Fase 1 (mesa atribuída por turno).
-create index if not exists reservations_table_turn_idx
-  on public.reservations (restaurant_id, turn_id, table_id);
+-- Suporta a query de disponibilidade Fase 1: dado (restaurant_id, data, turno),
+-- que mesas já estão ocupadas. A unidade de disponibilidade é (date, turn_id).
+create index if not exists reservations_availability_idx
+  on public.reservations (restaurant_id, service_date, turn_id, table_id);
+-- Unicidade de atribuição: uma mesa não pode ter 2 reservas activas
+-- (status != cancelada) no mesmo (service_date, turno).
+-- Índice PARCIAL: ignora reservas sem mesa (table_id null) e canceladas,
+-- portanto reservas "por atribuir" (table_id null) NÃO colidem entre si.
+create unique index if not exists reservations_table_slot_uidx
+  on public.reservations (restaurant_id, service_date, turn_id, table_id)
+  where table_id is not null and status <> 'cancelada';
 
 create or replace function public.is_restaurant_member(target uuid)
 returns boolean

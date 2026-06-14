@@ -7,7 +7,7 @@
 
 begin;
 
-select plan(11);
+select plan(15);
 
 -- pgTAP disponível
 select has_extension('pgtap');
@@ -43,11 +43,51 @@ values ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
         'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Jantar', 'jantar',
         '20:00', array[1,2,3,4,5,6,7]);
 
-insert into public.reservations (restaurant_id, customer_id, table_id, turn_id, customer_name, party_size, reserved_at)
+insert into public.reservations (restaurant_id, customer_id, table_id, turn_id, customer_name, party_size, reserved_at, service_date)
 values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         'cccccccc-cccc-cccc-cccc-cccccccccccc',
         'dddddddd-dddd-dddd-dddd-dddddddddddd',
-        'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Cliente Um', 2, now());
+        'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Cliente Um', 2, now(), date '2026-06-20');
+
+-- ── Cenário 0: índice único parcial de atribuição de mesa ─────────────────
+-- (validado como service_role no setup, antes de aplicar RLS de role)
+
+-- (a) Duas reservas SEM mesa (table_id null) no mesmo (service_date, turno)
+--     NÃO colidem: o índice parcial ignora table_id null.
+select lives_ok($$
+  insert into public.reservations
+    (restaurant_id, table_id, turn_id, customer_name, party_size, reserved_at, service_date)
+  values
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', null,
+     'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Sem Mesa 1', 2, now(), date '2026-06-20'),
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', null,
+     'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Sem Mesa 2', 2, now(), date '2026-06-20')
+$$, 'Duas reservas por atribuir (table_id null) no mesmo slot NÃO colidem');
+
+-- (b) Segunda reserva ACTIVA na mesma mesa + mesmo (service_date, turno) COLIDE.
+select throws_ok($$
+  insert into public.reservations
+    (restaurant_id, table_id, turn_id, customer_name, party_size, reserved_at, service_date)
+  values
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+     'dddddddd-dddd-dddd-dddd-dddddddddddd',
+     'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Duplicado', 2, now(), date '2026-06-20')
+$$, '23505', null,
+   'Segunda reserva activa na mesma mesa/slot COLIDE (unique violation)');
+
+-- (c) Reserva CANCELADA na mesma mesa + slot NÃO colide (índice ignora cancelada).
+select lives_ok($$
+  insert into public.reservations
+    (restaurant_id, table_id, turn_id, customer_name, party_size, reserved_at, service_date, status)
+  values
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+     'dddddddd-dddd-dddd-dddd-dddddddddddd',
+     'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Cancelada', 2, now(), date '2026-06-20', 'cancelada')
+$$, 'Reserva cancelada na mesma mesa/slot NÃO colide');
+
+-- Limpeza dos extras do Cenário 0 para não afectar as contagens dos cenários
+-- seguintes (mantém só a reserva original 'Cliente Um').
+delete from public.reservations where customer_name in ('Sem Mesa 1','Sem Mesa 2','Cancelada');
 
 -- ── Cenário 1: utilizador A (membro) VÊ os seus dados ─────────────────────
 set local role authenticated;
