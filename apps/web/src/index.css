@@ -17,7 +17,22 @@
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 222 47% 11%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
     --radius: 0.6rem;
+
+    /* Estados de reserva — pares bg/fg verificados para contraste AA.
+       Fallback alinhado ao palette neutro do repo (sem brand HTML disponível). */
+    --status-confirmed-bg: 142 60% 92%;
+    --status-confirmed-fg: 142 72% 22%;
+    --status-seated-bg: 217 91% 93%;
+    --status-seated-fg: 222 75% 33%;
+    --status-pending-bg: 38 96% 90%;
+    --status-pending-fg: 30 80% 28%;
+    --status-cancelled-bg: 210 40% 94%;
+    --status-cancelled-fg: 215 20% 38%;
+    --status-noshow-bg: 0 80% 94%;
+    --status-noshow-fg: 0 68% 38%;
   }
   * { @apply border-border; }
   body { @apply bg-background text-foreground; }
